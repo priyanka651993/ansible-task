@@ -1,0 +1,61 @@
+---
+ - name:  Configure apache server virtual hosting
+   hosts:  apache
+   gather_facts: no   
+   tasks:
+     - name:  install httpd
+       yum: 
+         name:  httpd
+         state: present
+        
+     - name:  start httpd service
+       service:
+         name:  httpd
+         state:  started
+         enabled: yes
+
+     - name:  start firewall
+       service:
+         name:  firewalld
+         state:  started
+         enabled:  yes  
+
+     - name:  add http in  firewall
+       firewalld:
+         zone:  public
+         service:  http
+         permanent:  yes
+         state:  enabled
+
+     - name:  create index.html to /var/www/html
+       file:
+         path:  /var/www/html/index.html
+         state:  touch
+
+     - name:  write servername to /etc/hosts
+       lineinfile:  
+         line:  "10.76.0.51  xyz.example.com" 
+         path:  /etc/hosts
+       
+     - name:  copy xyz.conf to /etc/httpd/conf.d/
+       file: 
+         path:  /etc/httpd/conf.d/xyz.conf
+         state:  touch
+      
+     - name:  contents in xyz.conf
+       lineinfile:
+         line:  "   <virtualhost *:80>\n
+                    servername xyz.example.com\n
+                    documentroot /var/www/html\n
+                    </virtualhost>\n
+                    <directory /var/www/html>\n
+                    require all granted\n
+                    </directory>"
+         path:  /etc/httpd/conf.d/xyz.conf
+       notify:  restart httpd 
+
+   handlers:   
+     - name:  restart httpd
+       service:  
+         name:  httpd                
+         state:  restarted
