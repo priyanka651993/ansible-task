@@ -1,0 +1,48 @@
+---
+ - name:  Configure apache server virtual hosting
+   hosts:  apache
+   gather_facts: no   
+   tasks:
+     - name:  install httpd
+       yum: 
+         name:  httpd
+         state: present
+        
+     - name:  start httpd service
+       service:
+         name:  httpd
+         state:  started
+     
+     - name:  enable httpd service
+       service:
+         name:  httpd
+         state: enabled
+
+     - name:  enable firewall
+       firewalld:
+         zone:  public
+         service:  http
+         permanent:  yes
+         state:  enabled
+
+     - name:  copy index.html to /var/www/html
+       copy:
+         src:  /root/ansible-task/index.html
+         dest: /var/www/html/
+
+     - name:  write servername to /etc/hosts
+       copy:  
+         content: "10.76.0.51  abc.example.com" 
+         dest:  /etc/hosts
+       
+     - name:  copy abc.conf to /etc/httpd/conf.d/
+       copy: 
+         src: /root/ansible-task/abc.conf
+         dest:  /etc/httpd/conf.d/
+       notify: restart httpd 
+
+   handlers:   
+     - name:  restart httpd
+       service:  
+         name:  httpd                
+         state:  restarted
